@@ -1,5 +1,4 @@
-% Value approximation in LQR
-
+% Value approximation in LQR for Lecture 16 in 16-899 ACRL spring 2020
 x0 = 1;
 nx = 1;
 nu = 1;
@@ -33,7 +32,7 @@ k_max = 100;
 W = W_init; % Qudratic parameterization
 traj_mc = zeros(n_ep,nx*k_max);
 rms_mc = zeros(1,n_ep);
-figure; hold on;
+figure(1);clf;subplot(311);hold on;
 for episode = 1:n_ep
     x = x0; k = 0; 
     u = greedy(x, W, epsilon);
@@ -61,12 +60,13 @@ for episode = 1:n_ep
     rms_mc(episode) = norm(W - W_gt);
 end
 plot(0:10,[x0 traj_opt(1,1:nx*10)],'--k')
+title("MC")
 box on;
 %% SARSA
 W = W_init; % Qudratic parameterization
 traj_sarsa = zeros(n_ep,nx*k_max);
 rms_sarsa = zeros(1,n_ep);
-figure; hold on;
+subplot(312);hold on;
 for episode = 1:n_ep
     x = x0; k = 0; 
     u = greedy(x, W, epsilon);
@@ -83,28 +83,28 @@ for episode = 1:n_ep
     rms_sarsa(episode) = norm(W - W_gt);
 end
 plot(0:10,[x0 traj_opt(1,1:nx*10)],'--k')
+title("Sarsa")
 box on;
 %% Q-Learning
 W = W_init; % Qudratic parameterization
 traj_q = zeros(n_ep,nx*k_max);
 rms_q = zeros(1,n_ep);
-figure; hold on;
+subplot(313);hold on;
 for episode = 1:n_ep
     x = x0; k = 0;
     while ~terminal(x, p) && k < k_max
         u = greedy(x, W, epsilon);
-        xnew = dynamics(x, u, p);
-        W = W + alpha * (l + delta * x'*min_Q(W,p)*x/2 - [x;u]'*W*[x;u]/2) * 0.5*[x;u]*[x;u]';
+        [xnew, l] = dynamics(x, u, p);
+        W = W + alpha * (l + delta * xnew'*min_Q(W,p)*xnew/2 - [x;u]'*W*[x;u]/2) * 0.5*[x;u]*[x;u]';
         x = xnew;
-        u = unew;
         k = k+1;
         traj_q(episode,nx*(k-1)+1:nx*k) = x;
     end
     plot(0:k,[x0 traj_q(episode,1:nx*k)],'color',[0.2+0.8*episode/n_ep, 1-0.8*episode/n_ep, 1-0.9*episode/n_ep])
     rms_q(episode) = norm(W - W_gt);
-    %epsilon = epsilon * (1-episode/n_ep);
 end
 plot(0:10,[x0 traj_opt(1,1:nx*10)],'--k')
+title("Q-learning")
 box on;
 %% Visualize SARSA Q-Learning
 figure;
